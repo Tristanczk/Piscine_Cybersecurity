@@ -6,7 +6,8 @@ import os
 from urllib.parse import urlsplit
 
 extensions = [".jpeg", ".jpg", ".png", ".gif", ".bmp"]
-count = 0
+count_images = 0
+count_pages = 0
 
 def parse_arguments():
 	parser = argparse.ArgumentParser(prog='Spider', description='A program that downloads image from a given URL.')
@@ -32,19 +33,8 @@ def make_output_dir(path):
 			print(f'Provided path for output directory is not valid: {path}', file=sys.stderr)
 			sys.exit(1)
 
-def scrape_images(url, output_dir, depth_level, max_depth_level):
-	global count
-	if depth_level > max_depth_level:
-		return
-	try:
-		request = requests.get(url)
-	except:
-		print(f'Provided URL is not valid: {url}', file=sys.stderr)
-		return
-	soup = BeautifulSoup(request.text, 'html.parser')
-	split_url = urlsplit(url)
-
-	images = soup.find_all('img')
+def get_image_urls(images, split_url):
+	image_urls = []
 	for image in images:
 		image_url = image.attrs.get('src')
 		if not image_url:
@@ -60,14 +50,51 @@ def scrape_images(url, output_dir, depth_level, max_depth_level):
 				image_url = split_url.scheme + '://' + split_url.netloc + image_url
 			else:
 				image_url = split_url.scheme + '://' + split_url.netloc + '/' + image_url
-		with open(output_dir + 'image' + str(count) + file_extension, 'wb') as f:
+		image_urls.append((image_url, file_extension))
+	return image_urls
+
+def scrape_images(url, output_dir, depth_level, max_depth_level):
+	global count_images
+	global count_pages
+	if depth_level > max_depth_level:
+		return
+	try:
+		request = requests.get(url)
+	except:
+		print(f'Provided URL is not valid: {url}', file=sys.stderr)
+		return
+	count_pages += 1
+	soup = BeautifulSoup(request.text, 'html.parser')
+	split_url = urlsplit(url)
+
+	images = soup.find_all('img')
+	image_urls = get_image_urls(images, split_url)
+	nb_images = len(image_urls)
+	local_count = 0
+	for image_url, file_extension in image_urls:
+		with open(output_dir + 'image' + str(count_images) + file_extension, 'wb') as f:
 			try:
 				r = requests.get(image_url)
 				f.write(r.content)
-				count += 1
-				print(f"{count} images downloaded", end="\r")
+				count_images += 1
+				local_count += 1
+				print(f"Current site: {url} | {local_count} / {nb_images} images downloaded", end="\r")
 			except:
 				continue
+	sys.stdout.write("\033[K")
+	links = soup.find_all('a', href=True)
+	for link in links:
+		link_url = link["href"]
+		if link_url.startswith('#'):
+			continue
+		elif not link_url.startswith('http'):
+			if link_url.startswith('//'):
+				link_url = split_url.scheme + ':' + link_url
+			elif link_url.startswith('/'):
+				link_url = split_url.scheme + '://' + split_url.netloc + link_url
+			else:
+				link_url = split_url.scheme + '://' + split_url.netloc + '/' + link_url
+		scrape_images(link_url, output_dir, depth_level + 1, max_depth_level)
 
 def main():
 	args = parse_arguments()
@@ -76,7 +103,7 @@ def main():
 		scrape_images(args.url, args.p, 1, args.l)
 	else:
 		scrape_images(args.url, args.p, 1, 1)
-	print(f'{count} images downloaded')
+	print(f'\nDownload finished: {count_images} images downloaded from {count_pages} web pages')
 	
 if __name__ == '__main__':
 	main()
