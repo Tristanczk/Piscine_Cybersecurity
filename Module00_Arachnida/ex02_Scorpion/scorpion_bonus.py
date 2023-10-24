@@ -1,6 +1,7 @@
 import sys
 import os
 import pyexiv2
+import PySimpleGUI as sg
 
 extensions = [".jpeg", ".jpg", ".png", ".gif", ".bmp"]
 
