@@ -1,6 +1,7 @@
 import sys
 import os
-import pyexiv2
+from PIL import Image
+from PIL.ExifTags import TAGS
 
 extensions = [".jpeg", ".jpg", ".png", ".gif", ".bmp"]
 
@@ -11,13 +12,20 @@ def handle_file_metadata(file):
 		print(f'File {file} extension is not valid. Accepted files are: .jpeg, .jpg, .png, .gif, .bmp.\n', file=sys.stderr)
 		return
 	try:
-		metadata = pyexiv2.ImageMetadata(file)
-		metadata.read()
+		image = Image.open(file)
 	except Exception as e:
 		print(f'Error opening the file: {e}\n', file=sys.stderr)
 		return
-	for key in metadata.exif_keys:
-		print(f"{key.split('.')[-1]:25}: {metadata[key].value}")
+	exifdata = image.getexif()
+	for tag_id in exifdata:
+		tag = TAGS.get(tag_id, tag_id)
+		data = exifdata.get(tag_id)
+		if isinstance(data, bytes):
+			try:
+				data = data.decode()
+			except:
+				continue
+		print(f"{tag:20}: {data}")
 	print()
 
 def main():
