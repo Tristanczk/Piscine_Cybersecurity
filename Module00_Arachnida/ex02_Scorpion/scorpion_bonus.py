@@ -29,7 +29,7 @@ fields = {
 }
 
 def handle_file_metadata(file, window):
-	_, file_extension = os.path.splitext(file)
+	filename, file_extension = os.path.splitext(file)
 	if file_extension not in extensions:
 		window["status"].update("File extension is not valid. Accepted files are: .jpeg, .jpg, .png, .gif, .bmp.", visible=True)
 		for key in fields:
@@ -50,12 +50,16 @@ def handle_file_metadata(file, window):
 				window[key].update(exifdata.get(key))
 	else:
 		window["status"].update("No EXIF data found in the image file.", visible=True)
+	# exifdata.model = "test"
+	# output_filename = filename + "_modified" + file_extension
+	# with open(output_filename, "wb") as of:
+	# 	of.write(exifdata.get_file())
 
 def main():
 	if (len(sys.argv) < 2):
 		print('Usage: python3 File1 [File2 ...]', file=sys.stderr)
 		return		
-	sg.theme("DarkGrey5")
+	sg.theme("DarkGrey14")
 	sg_elements = [
 		[
 			sg.Text("Select an image: ", size=(25, 1)),
@@ -64,17 +68,15 @@ def main():
 		[sg.Text("", key="status", text_color="red", visible=False, justification="center", size=(90, 1))]
 	]
 	for key, value in fields.items():
-		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key)])
+		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key), sg.Button(image_filename="pencil.png", image_size=(10, 10), key=f"edit_{key}", tooltip="Edit"), sg.Button(image_filename="eraser.png", image_size=(10, 10), key=f"remove_{key}", tooltip="Remove")])
 	window = sg.Window("Scorpion", sg_elements)
 	while True:
 		event, values = window.read()
-
 		if event == sg.WINDOW_CLOSED:
 			break
 		elif event == "image":
 			selected_file = values["image"]
 			handle_file_metadata(selected_file, window)
-
 	window.close()
 
 if __name__ == '__main__':
