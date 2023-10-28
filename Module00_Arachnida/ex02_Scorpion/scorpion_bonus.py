@@ -1,19 +1,31 @@
 import sys
 import os
 import PySimpleGUI as sg
-from PIL import Image
-from PIL.ExifTags import TAGS
+import exif
 
 extensions = [".jpeg", ".jpg", ".png", ".gif", ".bmp"]
 
 fields = {
-	"Make": "Camera Brand",
-	"Model": "Camera Model",
-	"XResolution": "Horizontal Resolution",
-	"YResolution": "Vertical Resolution",
-	"Software": "Software",
-	"DateTime": "Last Modified",
-	"ResolutionUnit": "Resolution Unit",
+	"make": "Camera Brand",
+	"model": "Camera Model",
+	"x_resolution": "Horizontal Resolution",
+	"y_resolution": "Vertical Resolution",
+	"software": "Software",
+	"datetime": "Last Modified",
+	"exposure_time": "Exposure Time",
+	"f_number": "F-Number",
+	"datetime_original": "Date Taken",
+	"datetime_digitized": "Date Digitized",
+	"shutter_speed_value": "Shutter Speed",
+	"aperture_value": "Aperture",
+	"brightness_value": "Brightness",
+	"exposure_bias_value": "Exposure Bias",
+	"focal_length": "Focal Length",
+	"pixel_x_dimension": "Width (pixels)",
+	"pixel_y_dimension": "Height (pixels)",
+	"focal_plane_x_resolution": "Focal Plane X-Resolution",
+	"focal_plane_y_resolution": "Focal Plane Y-Resolution",
+	"body_serial_number": "Body Serial Number",
 }
 
 def handle_file_metadata(file, window):
@@ -24,24 +36,20 @@ def handle_file_metadata(file, window):
 			window[key].update("")
 		return
 	try:
-		image = Image.open(file)
+		with open(file, "rb") as f:
+			exifdata = exif.Image(f)
 	except Exception as e:
 		window["status"].update("Error opening the file", visible=True)
 		for key in fields:
 			window[key].update("")
 		return
-	exifdata = image.getexif()
 	window["status"].update("", visible=False)
-	for tag_id in exifdata:
-		tag = TAGS.get(tag_id, tag_id)
-		data = exifdata.get(tag_id)
-		if isinstance(data, bytes):
-			try:
-				data = data.decode()
-			except:
-				continue
-		if tag in fields:
-			window[tag].update(data)
+	if exifdata.has_exif:
+		for key, _ in fields.items():
+			if key in exifdata.list_all():
+				window[key].update(exifdata.get(key))
+	else:
+		window["status"].update("No EXIF data found in the image file.", visible=True)
 
 def main():
 	if (len(sys.argv) < 2):
@@ -50,13 +58,13 @@ def main():
 	sg.theme("DarkGrey5")
 	sg_elements = [
 		[
-			sg.Text("Select an image: ", size=(20, 1)),
-			sg.Combo(sys.argv[1:], size=(50, 1), key="image", enable_events=True),
+			sg.Text("Select an image: ", size=(25, 1)),
+			sg.Combo(sys.argv[1:], size=(40, 1), key="image", enable_events=True),
 		],
-		[sg.Text("", key="status", text_color="red", visible=False, justification="center", size=(70, 1))]
+		[sg.Text("", key="status", text_color="red", visible=False, justification="center", size=(90, 1))]
 	]
 	for key, value in fields.items():
-		sg_elements.append([sg.Text(f"{value}: ", size=(20, 1)), sg.Text("", size=(50, 1), key=key)])
+		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key)])
 	window = sg.Window("Scorpion", sg_elements)
 	while True:
 		event, values = window.read()
