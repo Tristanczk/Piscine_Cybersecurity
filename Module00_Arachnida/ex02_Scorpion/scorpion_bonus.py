@@ -103,6 +103,7 @@ def main():
 		],
 		[sg.Text("", key="status", text_color="red", visible=False, justification="center", size=(90, 1))]
 	]
+	# need to add option in the program to activate the edit and remove buttons
 	for key, value in fields.items():
 		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key), sg.Button(image_filename="pencil.png", image_size=(10, 10), key=f"edit_{key}", tooltip="Edit"), sg.Button(image_filename="eraser.png", image_size=(10, 10), key=f"remove_{key}", tooltip="Remove")])
 	window = sg.Window("Scorpion", sg_elements)
