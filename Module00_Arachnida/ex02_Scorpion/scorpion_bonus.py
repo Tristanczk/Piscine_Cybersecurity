@@ -29,12 +29,12 @@ fields = {
 }
 
 def handle_file_metadata(file, window):
-	filename, file_extension = os.path.splitext(file)
+	_, file_extension = os.path.splitext(file)
 	if file_extension not in extensions:
 		window["status"].update("File extension is not valid. Accepted files are: .jpeg, .jpg, .png, .gif, .bmp.", visible=True)
 		for key in fields:
 			window[key].update("")
-		return
+		return False
 	try:
 		with open(file, "rb") as f:
 			exifdata = exif.Image(f)
@@ -42,18 +42,54 @@ def handle_file_metadata(file, window):
 		window["status"].update("Error opening the file", visible=True)
 		for key in fields:
 			window[key].update("")
-		return
-	window["status"].update("", visible=False)
+		return False
 	if exifdata.has_exif:
+		window["status"].update("", visible=False)
 		for key, _ in fields.items():
 			if key in exifdata.list_all():
 				window[key].update(exifdata.get(key))
+			else:
+				window[key].update("Unavailable data")
 	else:
 		window["status"].update("No EXIF data found in the image file.", visible=True)
-	# exifdata.model = "test"
-	# output_filename = filename + "_modified" + file_extension
-	# with open(output_filename, "wb") as of:
-	# 	of.write(exifdata.get_file())
+		return False
+	return True
+
+def edit_file_data(key, window, selected_file):
+	if selected_file is None:
+		window["status"].update("Please select a valid file to update values", visible=True)
+		return
+	new_value = sg.popup_get_text(f"Enter the new value for {fields[key]}: ")
+	if new_value is None:
+		return
+	with open(selected_file, "rb") as f:
+		exifdata = exif.Image(f)
+	while True:
+		try:
+			exifdata[key] = new_value
+			break
+		except Exception as e:
+			new_value = sg.popup_get_text(f"Error: {e}\nEnter the new value for {fields[key]}: ")
+			if new_value is None:
+				return
+	with open(selected_file, "wb") as of:
+		of.write(exifdata.get_file())
+	window[key].update(new_value)
+
+def erase_file_data(key, window, selected_file):
+	if selected_file is None:
+		window["status"].update("Please select a valid file to update values", visible=True)
+		return
+	check = sg.popup_yes_no(f"Are you sure you want to remove the {fields[key]} metadata from the file?")
+	if check == "No":
+		return
+	else:
+		with open(selected_file, "rb") as f:
+			exifdata = exif.Image(f)
+		exifdata.delete(key)
+		with open(selected_file, "wb") as of:
+			of.write(exifdata.get_file())
+		window[key].update("Unavailable data")
 
 def main():
 	if (len(sys.argv) < 2):
@@ -70,13 +106,21 @@ def main():
 	for key, value in fields.items():
 		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key), sg.Button(image_filename="pencil.png", image_size=(10, 10), key=f"edit_{key}", tooltip="Edit"), sg.Button(image_filename="eraser.png", image_size=(10, 10), key=f"remove_{key}", tooltip="Remove")])
 	window = sg.Window("Scorpion", sg_elements)
+	selected_file = None
 	while True:
 		event, values = window.read()
 		if event == sg.WINDOW_CLOSED:
 			break
 		elif event == "image":
 			selected_file = values["image"]
-			handle_file_metadata(selected_file, window)
+			if not handle_file_metadata(selected_file, window):
+				selected_file = None
+		elif event.startswith("edit_"):
+			key = event[5:]
+			edit_file_data(key, window, selected_file)
+		elif event.startswith("remove_"):
+			key = event[7:]
+			erase_file_data(key, window, selected_file)
 	window.close()
 
 if __name__ == '__main__':
