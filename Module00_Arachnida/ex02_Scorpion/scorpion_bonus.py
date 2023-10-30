@@ -2,6 +2,7 @@ import sys
 import os
 import PySimpleGUI as sg
 import exif
+import argparse
 
 extensions = [".jpeg", ".jpg", ".png", ".gif", ".bmp"]
 
@@ -92,20 +93,25 @@ def erase_file_data(key, window, selected_file):
 		window[key].update("Unavailable data")
 
 def main():
-	if (len(sys.argv) < 2):
-		print('Usage: python3 File1 [File2 ...]', file=sys.stderr)
-		return		
+	parser = argparse.ArgumentParser(prog='Scorpion', description='A program to see and manage exif metadata of an image file.')
+	parser.add_argument('-m', action='store_true', help='use this flag to enable modification / deletion of the metadata')
+	parser.add_argument('files', metavar='FILES', nargs='+', type=str, help='Enter the files that you want to see the metadata of (at least one file is required)')
+	args = parser.parse_args()
+		
 	sg.theme("DarkGrey14")
 	sg_elements = [
 		[
 			sg.Text("Select an image: ", size=(25, 1)),
-			sg.Combo(sys.argv[1:], size=(40, 1), key="image", enable_events=True),
+			sg.Combo(args.files, size=(40, 1), key="image", enable_events=True),
 		],
 		[sg.Text("", key="status", text_color="red", visible=False, justification="center", size=(90, 1))]
 	]
 	# need to add option in the program to activate the edit and remove buttons
 	for key, value in fields.items():
-		sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key), sg.Button(image_filename="pencil.png", image_size=(10, 10), key=f"edit_{key}", tooltip="Edit"), sg.Button(image_filename="eraser.png", image_size=(10, 10), key=f"remove_{key}", tooltip="Remove")])
+		if args.m:
+			sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key), sg.Button(image_filename="pencil.png", image_size=(10, 10), key=f"edit_{key}", tooltip="Edit"), sg.Button(image_filename="eraser.png", image_size=(10, 10), key=f"remove_{key}", tooltip="Remove")])
+		else:
+			sg_elements.append([sg.Text(f"{value}: ", size=(25, 1)), sg.Text("", size=(70, 1), key=key)])
 	window = sg.Window("Scorpion", sg_elements)
 	selected_file = None
 	while True:

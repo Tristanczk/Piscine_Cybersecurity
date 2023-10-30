@@ -39,7 +39,6 @@ def handle_file_metadata(file):
 	except Exception as e:
 		print(f'Error opening the file: {e}\n', file=sys.stderr)
 		return
-	print(exifdata.list_all())
 	if exifdata.has_exif:
 		for key, value in fields.items():
 			if key in exifdata.list_all():
