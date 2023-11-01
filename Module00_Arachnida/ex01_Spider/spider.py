@@ -82,6 +82,7 @@ def scrape_images(url, output_dir, depth_level, max_depth_level):
 			except:
 				continue
 	sys.stdout.write("\033[K")
+	sys.stdout.flush()
 	links = soup.find_all('a', href=True)
 	for link in links:
 		link_url = link["href"]
@@ -103,7 +104,7 @@ def main():
 		scrape_images(args.url, args.p, 1, args.l)
 	else:
 		scrape_images(args.url, args.p, 1, 1)
-	print(f'\nDownload finished: {count_images} images downloaded from {count_pages} web pages')
+	print(f'Download finished: {count_images} images downloaded from {count_pages} web pages')
 	
 if __name__ == '__main__':
 	main()

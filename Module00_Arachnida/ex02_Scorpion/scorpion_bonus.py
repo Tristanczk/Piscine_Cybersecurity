@@ -53,6 +53,8 @@ def handle_file_metadata(file, window):
 				window[key].update("Unavailable data")
 	else:
 		window["status"].update("No EXIF data found in the image file.", visible=True)
+		for key in fields:
+			window[key].update("")
 		return False
 	return True
 
