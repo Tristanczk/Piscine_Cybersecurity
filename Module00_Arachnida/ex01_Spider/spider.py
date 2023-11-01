@@ -33,6 +33,8 @@ def make_output_dir(path):
 			print(f'Provided path for output directory is not valid: {path}', file=sys.stderr)
 			sys.exit(1)
 
+#with urlsplit, scheme is http or https, and netloc is the hostname (e.g. www.google.com)
+
 def get_image_urls(images, split_url):
 	image_urls = []
 	for image in images:
