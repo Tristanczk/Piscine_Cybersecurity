@@ -7,6 +7,7 @@ import hmac
 from datetime import datetime
 import base64
 import PySimpleGUI as sg
+import qrcode
 
 
 encryption_key_file = "encryption_key.key"
@@ -64,6 +65,27 @@ def generate_password(key):
     return hotp(key, count)
 
 
+def generate_qrcode(key):
+    qrcode_key = base64.b32encode(
+        bytes.fromhex(key.decode("utf-8"))).decode("utf-8")
+    totp_uri = f'otpauth://totp/ft_otp:user?secret={qrcode_key}&issuer=ft_otp'
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=5,
+        border=2,
+    )
+    qr.add_data(totp_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    return img
+
+
+def reset_window(window):
+    window["status"].update(visible=False)
+    window["password"].update(visible=False)
+    window["qrcode_image"].update(visible=False)
+
+
 def manage_interface():
     sg.theme("DarkGrey14")
     sg_elements = [
@@ -78,15 +100,19 @@ def manage_interface():
             key="generate_pwd")]], element_justification='c'), sg.Push()],
         [sg.Text("", key="password", text_color="white", visible=False,
                  justification="center", size=(800, 1))],
+        [sg.Push(), sg.Column([[sg.Submit(
+            button_text="Generate qrcode",
+            key="generate_qrcode")],
+            [sg.Image(filename="", key="qrcode_image", visible=False)]],
+            element_justification='c'), sg.Push()],
     ]
-    window = sg.Window("ft_otp", sg_elements, size=(800, 200))
+    window = sg.Window("ft_otp", sg_elements, size=(800, 400))
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
         elif event == "submit_hex_key":
-            window["status"].update(visible=False)
-            window["password"].update(visible=False)
+            reset_window(window)
             key = verify_key(values["hex_key_file"])
             if not key:
                 window["status"].update("Impossible to generate key file",
@@ -101,8 +127,7 @@ def manage_interface():
                         "Error when trying to save key in ft_otp.key",
                         visible=True)
         elif event == "generate_pwd":
-            window["status"].update(visible=False)
-            window["password"].update(visible=False)
+            reset_window(window)
             key = verify_key_file("ft_otp.key", encryption_key_file)
             if not key:
                 window["status"].update("Impossible to access encrypted key",
@@ -112,6 +137,21 @@ def manage_interface():
                                           "{:06d}".format(
                                               generate_password(key)),
                                           visible=True)
+        elif event == "generate_qrcode":
+            reset_window(window)
+            key = verify_key_file("ft_otp.key", encryption_key_file)
+            if not key:
+                window["status"].update("Impossible to access encrypted key",
+                                        visible=True)
+            else:
+                try:
+                    qr_code = generate_qrcode(key)
+                    qr_code.save("qr_code.png")
+                    window["qrcode_image"].update(filename="qr_code.png",
+                                                  visible=True)
+                except Exception as e:
+                    window["status"].update(f"Error generating qr_code: {e}",
+                                            visible=True)
     window.close()
 
 
