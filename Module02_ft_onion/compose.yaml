@@ -1,0 +1,11 @@
+# note using 4242:4242 is impossible as it is already in use on host machine
+
+version: '3'
+services:
+  ft_onion:
+    container_name: ft_onion
+    build: ./
+    restart: always
+    ports:
+      - "8080:80"
+      - "8086:4242"
