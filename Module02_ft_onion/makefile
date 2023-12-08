@@ -15,6 +15,5 @@ down:
 
 clean: down
 	docker system prune -f -a --volumes
-	ssh-keygen -f "/mnt/nfs/homes/tczarnia/.ssh/known_hosts" -R "[localhost]:8086"
 
 re: clean all
