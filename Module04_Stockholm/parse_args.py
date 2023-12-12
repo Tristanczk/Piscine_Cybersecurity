@@ -8,18 +8,19 @@ class versionAction(argparse.Action):
         parser.exit()
 
 
-def check_key(s, parser):
-    """check if key is valid: at least 16 characters,
-    only alphanumeric characters"""
-    if len(s) < 16:
-        print("Provided encryption key must be at least 16 characters long",
-              file=sys.stderr)
+def check_key(s, parser, silent):
+    """check if key corresponds to the saved key"""
+    try:
+        with open("key.key", "r") as f:
+            key = f.read()
+    except Exception as e:
+        if not silent:
+            print(f"Error accessing the key file: {e}", file=sys.stderr)
         parser.exit()
-    for c in s:
-        if not c.isalnum():
-            print("Encryption key must be only alphanumeric characters",
-                  file=sys.sdterr)
-            parser.exit()
+    if s != key:
+        if not silent:
+            print("Provided key doesn't match encryption key", file=sys.stderr)
+        parser.exit()
 
 
 def parse_arguments():
@@ -28,14 +29,13 @@ def parse_arguments():
                                      description='A program that simulates the\
                                         behaviours of a malware inspecting\
                                         files')
-    parser.add_argument("key", metavar="KEY", type=str,
-                        help="program encryption key")
     parser.add_argument("-v", "--version", nargs=0, action=versionAction,
                         help="show program version")
-    parser.add_argument("-r", "--reverse", action='store_true',
+    parser.add_argument("-r", "--reverse", metavar='key', type=str,
                         help="reverse malware infection using provided key")
     parser.add_argument("-s", "--silent", action='store_true',
                         help="silence program output")
     args = parser.parse_args()
-    check_key(args.key, parser)
+    if (args.reverse):
+        check_key(args.reverse, parser, args.silent)
     return args
