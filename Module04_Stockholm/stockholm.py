@@ -49,7 +49,7 @@ def generate_encryption_key(silent):
             f.write(encryption_key)
         return encryption_key
     except Exception as e:
-        if not silent:  
+        if not silent:
             print(f"Error with the encryption key: {e}",
                   file=sys.stderr)
         return
@@ -73,7 +73,7 @@ def encrypt_files(root, key, silent):
                 except Exception as e:
                     if not silent:
                         print(f"Error when ecrypting files {filepath}: {e}",
-                            file=sys.stderr)
+                              file=sys.stderr)
         for subdir in subdirs:
             encrypt_files(subdir, key, silent)
 
@@ -96,7 +96,7 @@ def decrypt_files(root, key, silent):
                 except Exception as e:
                     if not silent:
                         print(f"Error when decrypting files {filepath}: {e}",
-                            file=sys.stderr)
+                              file=sys.stderr)
         for subdir in subdirs:
             decrypt_files(subdir, key, silent)
 
