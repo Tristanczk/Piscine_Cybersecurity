@@ -1,0 +1,23 @@
+FROM    debian:buster	
+
+ARG		FTP_USER
+ARG		FTP_PASSWORD
+
+RUN     apt update -y \
+        && apt upgrade -y \
+        && apt install -y vsftpd \
+		&& apt install -y net-tools
+
+RUN		mkdir -p /var/run/vsftpd/empty
+
+RUN		mkdir -p /home/${FTP_USER} \
+		&& adduser ${FTP_USER} --gecos "${FTP_USER} FTP,RoomNumber,WorkPhone,HomePhone" --disabled-password \
+		&& echo "${FTP_USER}:${FTP_PASSWORD}" | /usr/sbin/chpasswd \
+    	&& chown -R ${FTP_USER}:${FTP_USER} /home/${FTP_USER} \
+    	&& echo ${FTP_USER} | tee -a /etc/vsftpd.userlist
+
+COPY    ./conf/vsftpd.conf /etc/vsftpd.conf
+
+EXPOSE  21
+
+ENTRYPOINT     ["vsftpd", "/etc/vsftpd.conf"]

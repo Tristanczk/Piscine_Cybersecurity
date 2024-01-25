@@ -1,0 +1,16 @@
+FROM python:3.10
+
+RUN apt update -y && apt upgrade -y
+RUN apt install libpcap-dev -y
+RUN apt install python3-dev -y
+
+RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
+RUN pip install python-libpcap
+RUN pip install scapy
+
+WORKDIR /app
+
+# will need to configure the required pip install
+
+CMD ["tail", "-f"]

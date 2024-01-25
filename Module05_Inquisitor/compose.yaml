@@ -1,0 +1,57 @@
+#https://www.baeldung.com/ops/docker-assign-static-ip-container
+
+version: "3"
+
+services:
+  server:
+    container_name: server
+    build:
+      dockerfile: ./Dockerfiles/Dockerfile.server
+      args:
+        - FTP_USER=${FTP_USER}
+        - FTP_PASSWORD=${FTP_PASSWORD}
+    restart: always
+    ports:
+      - "2020:20"
+      - "2021:21"
+      - "21100-21110:21100-21110"
+    env_file:
+      - .env
+    mac_address: ${MAC_SERVER}
+    networks:
+      inquisitor:
+        ipv4_address: ${IP_SERVER}
+
+  client:
+    container_name: client
+    build:
+      dockerfile: ./Dockerfiles/Dockerfile.client
+    restart: always
+    env_file:
+      - .env
+    mac_address: ${MAC_CLIENT}
+    networks:
+      inquisitor:
+        ipv4_address: ${IP_CLIENT}
+
+  inquisitor:
+    container_name: inquisitor
+    build:
+      dockerfile: ./Dockerfiles/Dockerfile.inquisitor
+    restart: always
+    env_file:
+      - .env
+    mac_address: ${MAC_INQUISITOR}
+    networks:
+      inquisitor:
+        ipv4_address: ${IP_INQUISITOR}
+    volumes:
+      - ./python:/app
+
+
+networks:
+  inquisitor:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.11.168/24

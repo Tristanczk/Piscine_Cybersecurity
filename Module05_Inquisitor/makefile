@@ -1,19 +1,28 @@
-NAME	:= inquisitor
-
 all:
-	docker build -t ${NAME} .
+	docker compose up -d
 
-bash:
-	docker run -it --name ${NAME} ${NAME} 
+server:
+	docker exec -it server /bin/bash
+
+client:
+	docker exec -it client /bin/bash
+
+inquisitor:
+	docker exec -it inquisitor /bin/bash
+
+log:
+	docker compose up
+
+ps:
+	docker compose ps
 
 stop:
-	docker stop ${NAME}
+	docker compose stop
 
-rm:
-	docker rm ${NAME}
-	docker image rm ${NAME}
+down:
+	docker compose down -v
 
-clean: rm
+clean: down
 	docker system prune -f -a --volumes
 
 re: clean all

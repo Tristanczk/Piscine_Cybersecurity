@@ -1,0 +1,10 @@
+FROM debian:buster
+
+RUN     apt update -y \
+        && apt upgrade -y \
+        && apt install -y ftp \
+		&& apt install -y net-tools
+
+COPY	./example_files /home/example_files
+
+CMD		["tail", "-f"]
