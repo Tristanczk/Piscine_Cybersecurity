@@ -71,7 +71,7 @@ def main():
             print("Stopping process, restoring default ARP table...")
             restore_arp(args.IP_src, args.MAC_src, args.IP_target, args.MAC_target)
             restore_arp(args.IP_target, args.MAC_target, args.IP_src, args.MAC_src)
-            return
+            exit(0)
 
 if __name__ == "__main__":
     main()
