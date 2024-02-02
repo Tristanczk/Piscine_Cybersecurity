@@ -41,7 +41,7 @@ def parse_arguments():
     parser.add_argument("MAC_target", metavar="MAC_TARGET", type=str,
                         help="target MAC address")
     parser.add_argument("-v", "--verbose", action='store_true',
-                    help="display all ftp actions")
+                        help="display all ftp actions")
     args = parser.parse_args()
     verify_address(args, parser)
     return args
